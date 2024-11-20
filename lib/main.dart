@@ -1,92 +1,339 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(const FitnessTrackerPreview());
+}
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  static const String _title = 'Flutter Stateful Clicker Counter';
-  // This widget is the root of your application.
+class FitnessTrackerPreview extends StatelessWidget {
+  const FitnessTrackerPreview({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: _title,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // useMaterial3: false,
-        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const MyHomePage(),
+      home: const HomeScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-  // This class is the configuration for the state.
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  final List<Widget> _screens = [
+    const DashboardScreen(),
+    const ActivitiesScreen(),
+    const GoalsScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: const Text('Flutter Demo Click Counter'),
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.fitness_center_outlined),
+            selectedIcon: Icon(Icons.fitness_center),
+            label: 'Activities',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.track_changes_outlined),
+            selectedIcon: Icon(Icons.track_changes),
+            label: 'Goals',
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+    );
+  }
+}
+
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: [
+        const SliverAppBar.large(
+          floating: true,
+          title: Text('Fitness Tracker'),
+          actions: [
+            CircleAvatar(child: Icon(Icons.person)),
+            SizedBox(width: 16),
+          ],
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const StatsGrid(),
+                const SizedBox(height: 16),
+                const ActivityChart(),
+                const SizedBox(height: 16),
+                RecentActivitiesList(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class StatsGrid extends StatelessWidget {
+  const StatsGrid({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.5,
+      children: const [
+        StatCard(
+          title: 'Total Calories',
+          value: '1,800',
+          subtitle: '90% of goal',
+          icon: Icons.local_fire_department,
+          color: Colors.orange,
+        ),
+        StatCard(
+          title: 'Active Minutes',
+          value: '230',
+          subtitle: 'This week',
+          icon: Icons.timer,
+          color: Colors.blue,
+        ),
+        StatCard(
+          title: 'Activities',
+          value: '5',
+          subtitle: 'Completed',
+          icon: Icons.fitness_center,
+          color: Colors.green,
+        ),
+        StatCard(
+          title: 'Weekly Goal',
+          value: '2,000',
+          subtitle: 'Calories target',
+          icon: Icons.track_changes,
+          color: Colors.purple,
+        ),
+      ],
+    );
+  }
+}
+
+class StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+
+  const StatCard({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                Icon(icon, color: color),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
             Text(
-              '$_counter',
-              style: const TextStyle(fontSize: 25),
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+class ActivityChart extends StatelessWidget {
+  const ActivityChart({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Activity Overview',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(show: true),
+                  borderData: FlBorderData(show: true),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: [
+                        FlSpot(0, 1),
+                        FlSpot(2, 3),
+                        FlSpot(3, 1.5),
+                      ],
+                      isCurved: true,
+                      colors: [
+                        Colors.blue
+                      ], // Replace with gradient if required
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class RecentActivitiesList extends StatelessWidget {
+  final List<Map<String, String>> activities = const [
+    {
+      'name': 'Running',
+      'duration': '45 min',
+      'calories': '320 cal',
+      'date': 'Today 10:30 AM'
+    },
+    {
+      'name': 'Cycling',
+      'duration': '30 min',
+      'calories': '280 cal',
+      'date': 'Today 8:00 AM'
+    },
+    {
+      'name': 'Swimming',
+      'duration': '60 min',
+      'calories': '400 cal',
+      'date': 'Yesterday 4:30 PM'
+    },
+  ];
+
+  RecentActivitiesList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Recent Activities',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: activities.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final activity = activities[index];
+              return ListTile(
+                leading: const CircleAvatar(
+                  child: Icon(Icons.fitness_center),
+                ),
+                title: Text(activity['name']!),
+                subtitle: Text(activity['date']!),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(activity['calories']!),
+                    Text(
+                      activity['duration']!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ActivitiesScreen extends StatelessWidget {
+  const ActivitiesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text('Activities Screen'),
+    );
+  }
+}
+
+class GoalsScreen extends StatelessWidget {
+  const GoalsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text('Goals Screen'),
     );
   }
 }
